@@ -2,7 +2,7 @@
 
 Little git extras we use at [General Assembly](https://generalassemb.ly/).
 
-Inspired by [Git Extras](## Installation).
+Inspired by [Git Extras](https://github.com/tj/git-extras).
 
 ## Installation
 
