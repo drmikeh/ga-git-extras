@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+
+## Usage: git hwk-submit
+## Prerequisites:
+##   (a) You should be in a clone of the GA WDI student repo.
+##   (b) You should be in a homework branch with a name that
+##       starts with 'hwk' or 'homework', for example:
+##         hwk_js_arrays_and_loops
+##   (c) You shoud have committed your work to the homework branch.
+##   (d) You will need to know your GitHub password as this script will ask
+##       you for it.
+
+#
+# Echo <msg> and exit
+#
+
+abort() {
+  echo $@
+  exit 1
+}
+
+#
+# Prompt the user to confirm
+#
+
+confirm() {
+  echo $1
+  read -r -p "Are you sure? [y/N] " response
+  if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]] ; then
+    echo
+  else
+    abort 'aborting'
+  fi
+}
+
+#
+# Produce json with <title>, <body>, <head> and <base>
+#
+
+json() {
+  cat <<EOF
+{
+  "title": "$1",
+  "body": "$2",
+  "head": "$3",
+  "base": "$4"
+}
+EOF
+}
+
+# Read Command Line Options
+debug="false"
+netrc="false"
+
+while [[ $# > 0 ]]
+do
+  key="$1"
+
+  case $key in
+    -d|--debug)
+    debug="true"
+    shift
+    ;;
+
+    -n|--netrc)
+    netrc="true"
+    shift
+    ;;
+
+    -h|--help)
+    echo "Usage: git hwk-submit [-n] [-d] [-h]"
+    echo "General options:"
+    echo "  -n, --netrc    # Use your ~/.netrc file to authenticate"
+    echo "  -d, --debug    # Print debug information"
+    echo "  -h, --help     # Print usage and options"
+    echo "Note: you should run this command from a homework branch after you have committed your work."
+    exit 0
+    ;;
+
+    *)
+    echo "Unrecognized option: $key"
+    shift
+    ;;
+  esac
+done
+
+# userEmail
+
+userEmail=$(git config --global user.email)
+test -z "$userEmail" && abort "git config user.email required"
+
+# branch
+
+branch=$(git symbolic-ref HEAD | sed 's/refs\/heads\///')
+
+# make sure we are on a homework branch
+echo "Verifying..."
+echo "$branch"
+if [[ $branch == hwk* ]] || [[ $branch == homework* ]] ; then
+  echo  "  You are on a homework branch - Good Job!"
+  echo  "  I hope you remembered to commit your work!"
+else
+  echo  "  You should be on a homework branch. Please use a branch that begins with 'hwk' or 'homework'."
+  abort "  Aborting"
+fi
+
+# make sure it's pushed
+echo
+echo "Now let's push this branch..."
+git push origin $branch || abort "failed to push $branch"
+
+# lame hack to get project
+
+# project=$(git config remote.origin.url | sed 's/^.*://' | sed 's/\.git$//')
+project=$(git config remote.origin.url | sed 's/^.*github.com\///' | sed 's/\.git$//')
+
+owner=`dirname ${project}`
+repo=`basename ${project}`
+
+# prompt
+
+echo
+echo "Preparing pull-request for $project - '$branch'"
+echo
+printf "  Enter a title for the PR: " && read title
+printf "  Enter a message body for the PR: " && read body
+# printf "  base [master]: " && read base
+echo
+
+if [ -z "$base" ] ; then
+    base="master"
+fi
+
+msg="About to create pull-request"
+confirm "${msg}"
+
+# create pull request
+
+body=$(json "$title" "$body" $branch "$base")
+
+if [ "$debug" = true ] ; then
+  echo "  userEmail: ${userEmail}"
+  echo "  owner: ${owner}"
+  echo "  repo: ${repo}"
+  echo "  body: ${body}"
+fi
+
+# POST /repos/:owner/:repo/pulls
+if [ "$netrc" = true ] ; then
+  http_code=$(curl --netrc "https://api.github.com/repos/$owner/$repo/pulls" -d "$body" --silent --write-out %{http_code} --output /tmp/pull-request)
+else
+  http_code=$(curl -u "$userEmail" "https://api.github.com/repos/$owner/$repo/pulls" -d "$body" --silent --write-out %{http_code} --output /tmp/pull-request)
+fi
+
+if [[ $http_code == "201" ]] ; then
+  echo "Your pull-request has been created."
+  # pr_number=$(grep number /tmp/pull-request | sed 's/"number": //' | sed 's/,//')
+  # "html_url": "https://github.com/drmikeh/WDI_ATL_3/pull/17",
+  pr_url=$(grep html_url /tmp/pull-request | head -1 | sed 's/html_url: //' | sed 's/"html_url": //' | sed 's/,//')
+  echo "You can see your pull-request at: ${pr_url}"
+else
+  echo "ERROR: pull-request failed with HTTP code: ${http_code}"
+  echo "Details:"
+  details=$(grep message /tmp/pull-request)
+  echo "  $details"
+fi
