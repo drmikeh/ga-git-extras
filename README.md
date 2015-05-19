@@ -10,4 +10,4 @@ See [Installation](Installation.md) page.
 
 ## Commands
 
-Go to [Commands](commands.md) page for basic usage and examples.
+Go to [Commands](Commands.md) page for basic usage and examples.
