@@ -1,15 +1,15 @@
-## Debian
-
-```bash
-$ sudo $apt_pref update
-$ sudo $apt_pref install git-extras
-```
-
 ## Mac
 
 ```bash
 $ brew tap drmikeh/homebrew-ga-extras
 $ brew install git-extras
+```
+
+## Debian
+
+```bash
+$ sudo $apt_pref update
+$ sudo $apt_pref install git-extras
 ```
 
 ## Clone / Tarball:
