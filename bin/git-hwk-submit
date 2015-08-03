@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
+VERSION=0.1.1
+
 ## Usage: git hwk-submit
 ## Prerequisites:
-##   (a) You should be in a clone of the GA WDI student repo.
-##   (b) You should be in a homework branch with a name that
-##       starts with 'hwk' or 'homework', for example:
-##         hwk_js_arrays_and_loops
-##   (c) You shoud have committed your work to the homework branch.
+##   (a) You should be in a clone of the GA WDI homework repo.
+##   (b) You should be in a branch (not the master branch)
+##   (c) You shoud have committed your work to the branch.
 ##   (d) You will need to know your GitHub password as this script will ask
 ##       you for it.
 
@@ -67,11 +67,17 @@ do
     shift
     ;;
 
+    -v|--version)
+    echo "git-hwk-submit $VERSION"
+    exit 0
+    ;;
+
     -h|--help)
     echo "Usage: git hwk-submit [-n] [-d] [-h]"
     echo "General options:"
     echo "  -n, --netrc    # Use your ~/.netrc file to authenticate"
     echo "  -d, --debug    # Print debug information"
+    echo "  -v, --version  # Print the version information"
     echo "  -h, --help     # Print usage and options"
     echo "Note: you should run this command from a homework branch after you have committed your work."
     exit 0
@@ -79,7 +85,7 @@ do
 
     *)
     echo "Unrecognized option: $key"
-    shift
+    exit 0
     ;;
   esac
 done
@@ -96,12 +102,12 @@ branch=$(git symbolic-ref HEAD | sed 's/refs\/heads\///')
 # make sure we are on a homework branch
 echo "Verifying..."
 echo "$branch"
-if [[ $branch == hwk* ]] || [[ $branch == homework* ]] ; then
-  echo  "  You are on a homework branch - Good Job!"
-  echo  "  I hope you remembered to commit your work!"
-else
-  echo  "  You should be on a homework branch. Please use a branch that begins with 'hwk' or 'homework'."
+if [[ $branch == master ]] ; then
+  echo  "  You should be on a branch. Please use a branch that begins with 'hwk' or 'homework'."
   abort "  Aborting"
+else
+  echo  "  You are on a branch - Good Job!"
+  echo  "  I hope you remembered to commit your work!"
 fi
 
 # make sure it's pushed
