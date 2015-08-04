@@ -79,7 +79,7 @@ do
     echo "  -d, --debug    # Print debug information"
     echo "  -v, --version  # Print the version information"
     echo "  -h, --help     # Print usage and options"
-    echo "Note: you should run this command from a homework branch after you have committed your work."
+    echo "Note: you should run this command from a branch after you have committed your work."
     exit 0
     ;;
 
@@ -99,11 +99,11 @@ test -z "$userEmail" && abort "git config user.email required"
 
 branch=$(git symbolic-ref HEAD | sed 's/refs\/heads\///')
 
-# make sure we are on a homework branch
+# make sure we are on a branch
 echo "Verifying..."
 echo "$branch"
 if [[ $branch == master ]] ; then
-  echo  "  You should be on a branch. Please use a branch that begins with 'hwk' or 'homework'."
+  echo  "  You should be on a branch. Please use a branch that is not the master branch."
   abort "  Aborting"
 else
   echo  "  You are on a branch - Good Job!"
